@@ -17,10 +17,10 @@ plugins.push(new webpack.DefinePlugin({
   SDK_VERSION: JSON.stringify(SDK_VERSION)
 }));
 
-testConfig.module.rules.push({
-  test: /\.js$/,
-  use: ['source-map-loader'],
-  enforce: 'pre'
+testConfig.module.rules.push({	
+  test: /\.js$/,	
+  use: ['source-map-loader'],	
+  enforce: 'pre'	
 });
 
 testConfig.entry = null;

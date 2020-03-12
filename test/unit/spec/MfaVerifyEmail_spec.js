@@ -160,7 +160,7 @@ define([
         .then(function (test) {
           expect(Util.numAjaxRequests()).toBe(0);
           expect(test.form.passCodeErrorField().length).toBe(1);
-          expect(test.form.passCodeErrorField().text())
+          expect(test.form.passCodeErrorField().text().trim())
             .toBe('This field cannot be left blank');
           expect(test.form.errorMessage())
             .toBe('We found some errors. ' +
