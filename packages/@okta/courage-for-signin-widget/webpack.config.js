@@ -18,6 +18,7 @@ const EXTERNAL_PATHS = [
   'backbone',
   'underscore',
   'handlebars',
+  'handlebars/runtime',
   'okta-i18n-bundles'
 ];
 
