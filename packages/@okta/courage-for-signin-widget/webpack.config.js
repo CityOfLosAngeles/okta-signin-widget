@@ -62,11 +62,23 @@ const webpackConfig = {
     rules: [
       {
         test: /\.js$/,
-        exclude: /node_modules/,
+        exclude: function (filePath) {
+          const filePathContains = (f) => filePath.indexOf(f) > 0;
+          const npmRequiresTransform = [
+            '/node_modules/@okta/courage',
+          ].some(filePathContains);
+          const shallBeExcluded = [
+            '/node_modules/',
+          ].some(filePathContains);
+          return shallBeExcluded && !npmRequiresTransform;
+        },
         loader: 'babel-loader',
         query: {
           presets: [['@babel/preset-env', { modules: 'commonjs' }]],
-          plugins: ['add-module-exports']
+          plugins: [
+            '@okta/babel-plugin-handlebars-inline-precompile',
+            'add-module-exports'
+          ]
         }
       },
     ]
