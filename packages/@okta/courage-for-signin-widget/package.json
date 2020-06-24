@@ -4,13 +4,12 @@
   "description": "generates a Courage version for Sign-In Widget",
   "main": "src/CourageForSigninWidget.js",
   "scripts": {
-    "build": "webpack"
+    "build": "scripts/build.sh"
   },
   "devDependencies": {
-    "@okta/courage": "4.6.0-beta.3298.g75d547c",
-    "@roundingwellos/babel-plugin-handlebars-inline-precompile": "^3.0.1",
+    "@okta/babel-plugin-handlebars-inline-precompile": "3.1.0-alpha.3586.gd86894f",
+    "@okta/courage": "4.6.0-alpha.3586.gd86894f",
     "copy-webpack-plugin": "4.6.0",
-    "handlebars": "4.5.1",
     "webpack": "3.12.0",
     "webpack-bundle-analyzer": "3.0.2"
   }

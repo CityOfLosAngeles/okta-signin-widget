@@ -34,15 +34,8 @@ import Backbone from 'backbone';
 
 import FrameworkView from '@okta/courage/src/framework/View';
 
-const _viewAdd = FrameworkView.prototype.add;
-FrameworkView.prototype.add = function(view) {
-  if (_.isString(view)) {
-    console.warn('Attempt to add a view as a string: ', view);
-  }
-  return _viewAdd.apply(this, arguments);
-}
+// The string will be returned unchanged. All templates should be precompiled.
 FrameworkView.prototype.compileTemplate = function(str) {
-  console.warn('attempt to compile template: ', str);
   return function fakeTemplate() {
     return str;
   };
@@ -70,6 +63,8 @@ const Okta = {
   BaseModel: BaseModel,
 
   Collection: BaseCollection,
+
+  FrameworkView: FrameworkView,
 
   View: BaseView,
 
