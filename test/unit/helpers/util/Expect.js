@@ -16,6 +16,7 @@ define([
 
   var WAIT_MAX_TIME = 2000;
   var WAIT_INTERVAL = 20;
+  var WAIT_MAX_INTERVAL = 100;
 
   var unhandledRejectionListener = function (event) {
     // We've thrown an unexpected error in the test - setup a fake
@@ -197,7 +198,7 @@ define([
         fail('Wait condition not met');
       }
       else {
-        setTimeout(check.bind(null, success, fail, triesLeft - 1), WAIT_INTERVAL);
+        setTimeout(check.bind(null, success, fail, triesLeft - 1), WAIT_MAX_INTERVAL);
       }
     }
     return Q.Promise(function (resolve, reject) {

@@ -245,6 +245,9 @@ function (Okta, Q, factorUtil, Util, Errors, BaseLoginModel) {
 
     validate: function () {
       if (this.get('isAnswerRequired') && !this.get('answer')) {
+        // if (this.get('factorType') === 'email' && !this.options.appState.get('isMfaChallenge')) {
+        //   return {};
+        // }
         return {'answer': Okta.loc('model.validation.field.blank')};
       }
       else if(this.get('factorType') === 'password' && !this.get('password')) {

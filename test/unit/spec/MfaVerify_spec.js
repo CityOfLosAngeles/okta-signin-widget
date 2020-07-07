@@ -2900,7 +2900,7 @@ function (Okta,
               return setupOktaPushWithTOTP().then(function (test) {
                 spyOn(LoginUtil, 'callAfterTimeout').and.callFake(function () {
                   // reducing the timeout to 100 so that test is fast.
-                  return setTimeout(arguments[0], 100);
+                  return setTimeout(arguments[0], 200);
                 });
                 Util.resetAjaxRequests();
                 test.setNextResponse([resChallengePush, resAllFactors, resInvalid]);
