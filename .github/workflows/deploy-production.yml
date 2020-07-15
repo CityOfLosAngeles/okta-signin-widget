@@ -1,0 +1,39 @@
+# This workflow will checkout the contents of the `production` branch of this repo, remove all files in the current S3 bucket, and push the contents
+# of the target directory to the bucket. Once the contents of the S3 bucket has been updated, a call will be made to invalidate the cache in the CloudFront distribution.
+# The CloudFront distribution is configured to pull the contents from the S3 bucket once an `invalidation` request is sent.
+
+name: Deploy to Production CloudFront
+
+on: # run this workflow when a push has been made to `production` branch
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v1 # checks out the code in the repository
+    - name: Setup Node.js
+      uses: actions/setup-node@v1 # sets up Node.js in our environment
+      with:
+        node-version: '12.x'
+    - name: Install Dependencies and Build Okta
+      run: yarn install && yarn build:release
+    - name: Setup Python
+      uses: actions/setup-python@v1 # sets up python in our environment
+      with:
+        python-version: '3.x' # install python version 3.x, default architecture is x64
+    - name: Install AWS CLI
+      run: pip3 install awscli --upgrade --user # install the cli with upgrade to any requirements and into the subdir of the user
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1 # use the official GitHub Action from AWS to setup credentials
+      with:
+        aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.PROD_AWS_REGION }}
+        mask-aws-account-id: true
+    - name: Push Contents to S3 # push the target directory to the S3 bucket
+      run: aws s3 sync ./target s3://${{ secrets.PROD_S3_BUCKET_NAME }} --exclude ".git/*" --exclude ".github/*" --delete # have the bucket have the same contents as the repo target directory & exclude the git related directories.
+    - name: Invalidate CloudFront Cache # Invalidate the CloudFront Distribution Cache to get contents from the S3 bucket
+      run: aws cloudfront create-invalidation --distribution-id ${{ secrets.PROD_CDN_DISTRIBUTION_ID }} --paths "/*"
