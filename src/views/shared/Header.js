@@ -78,7 +78,9 @@ function (Okta, Animations, LoadingBeacon) {
 
     template: '\
       <div class="okta-sign-in-header auth-header">\
-        {{#if logo}}\
+      {{#if useSvgLogo}}\
+        <img src="../img/icons/login/CitySeal.svg" class="auth-org-logo" alt="{{logoText}}"/>\
+      {{else if logo}}\
         <img src="{{logo}}" class="auth-org-logo" alt="{{logoText}}"/>\
         {{/if}}\
         <div data-type="beacon-container" class="beacon-container"></div>\

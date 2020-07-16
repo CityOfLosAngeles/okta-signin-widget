@@ -60,6 +60,7 @@ define([
       'logo': 'string',
       'logoText' : ['string', false],
       'helpSupportNumber': 'string',
+      'useSvgLogo': ['boolean', true, false],
 
       // IDX API VERSION
       'apiVersion': ['string', true, '1.0.0'],
