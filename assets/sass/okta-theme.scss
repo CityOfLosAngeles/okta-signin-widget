@@ -229,25 +229,25 @@
   .mfa-google-auth-30,
   .enroll-factor-row .mfa-google-auth {
     /* -- Factor Icons (small): Google Authenticator -- */
-    background-image: url('../img/icons/mfa/googleAuth_38x38.png');
+    background-image: url('../img/icons/mfa/customFactor_38x38.png');
 
     @media
       (-webkit-min-device-pixel-ratio: 2),
       (min-resolution: 192dpi) {
       /* -- Factor Icons (high DPI): Google Authenticator -- */
-      background-image: url('../img/icons/mfa/googleAuth_ico@2x.png');
+      background-image: url('../img/icons/mfa/customFactor_ico@2x.png');
     }
   }
 
   .mfa-google-auth {
     /* -- Factor Icons (large): Google Authenticator -- */
-    background-image: url('../img/icons/mfa/googleAuth_70x70.png');
+    background-image: url('../img/icons/mfa/customFactor_70x70.png');
 
     @media
       (-webkit-min-device-pixel-ratio: 2),
       (min-resolution: 192dpi) {
       /* -- Factor Icons (high DPI): Google Authenticator  -- */
-      background-image: url('../img/icons/mfa/googleAuth@2x.png');
+      background-image: url('../img/icons/mfa/customFactor@2x.png');
     }
   }
 
