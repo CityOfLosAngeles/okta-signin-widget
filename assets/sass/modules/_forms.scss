@@ -71,10 +71,12 @@
     }
   }
 
+  // Username/password text boxes
   .input-fix,
   .textarea-fix {
     height: $input-height;
     border: 1px solid $input-border-color;
+    border-radius: 2rem; //Rounded edges on input boxes
     display: inline-block;
     float: left;
 
@@ -115,12 +117,18 @@
         border-radius: 3px;
       }
 
+      // Handles input text for Username/Password fields
       &[type="password"] {
         font-size: $font-size;
         // prevent zooming when field is focused on mobile phone
         @include mobile {
           font-size: $font-size-default;
         }
+        padding: 0.75rem 1.5rem;
+      }
+
+      &[type="text"]{
+        padding: 0.75rem 1.5rem;
       }
 
     }
