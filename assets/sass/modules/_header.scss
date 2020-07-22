@@ -1,12 +1,20 @@
 .auth-header {
-  padding: 30px 90px 75px;
+  padding: 40px;
+  // padding-bottom: 0px;
   position: relative;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 0px solid #ddd;
   z-index: 10;
 
   -moz-transition: padding-bottom 0.4s;
   -webkit-transition: padding-bottom 0.4s;
   transition: padding-bottom 0.4s;
+
+  align-self: center;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  max-width: 600px;
+  background-image: url('../../img/angeleno_banner.fw.png');
 }
 
 /* Org Logo */
@@ -14,7 +22,20 @@
 .auth-org-logo {
   display: block;
   margin: 0 auto;
-  max-width: 200px;
+  max-width: 100px;
   max-height: 100px;
   height: 100px;
+}
+
+.auth-org-text {
+  font-size: calc(20px + (30 - 20) * ((100vw - 400px) / (1000 - 400)));
+  font-weight: bold;
+  padding: 10px;
+  max-width: 400px;
+}
+
+@media (min-width:1000px) {
+  .auth-header {
+    height: 520px;
+  }
 }
