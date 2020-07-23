@@ -80,7 +80,6 @@ function (Okta, Animations, LoadingBeacon) {
       <div class="okta-sign-in-header auth-header">\
       {{#if useSvgLogo}}\
         <img src="https://angelenologin-static.lacity.org/img/icons/login/CitySeal.svg" class="auth-org-logo" alt="{{logoText}}"/>\
-        <p class="auth-org-text"> SIGN IN WITH YOUR ANGELENO ACCOUNT </p>\
       {{else if logo}}\
         <img src="{{logo}}" class="auth-org-logo" alt="{{logoText}}"/>\
         {{/if}}\

@@ -10,11 +10,6 @@
   position: relative;
   overflow: auto;
 
-
-  display: flex;
-  flex-wrap: wrap;
-  //background-image: url('../../img/angeleno_banner.fw.png');
-
   // Auth-container styles
   border-radius: 3px;
   border-style: solid;
@@ -43,5 +38,5 @@
 }
 
 #okta-sign-in.no-beacon .auth-header {
-  padding-bottom: 40px;
+  padding-bottom: 30px;
 }
