@@ -1,5 +1,5 @@
 .auth-header {
-  padding: 30px 90px 75px;
+  padding: 15px 90px 75px;
   position: relative;
   border-bottom: 1px solid #ddd;
   z-index: 10;
@@ -17,4 +17,29 @@
   max-width: 200px;
   max-height: 100px;
   height: 100px;
+}
+
+.side-box {
+  align-self: center;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  width: 600px;
+  height: 600px;
+  background-image: url('../../img/angeleno_banner.fw.png');
+  // box-shadow: 0 2px 0 rgba(175, 175, 175, 0.12);
+}
+
+.auth-org-text {
+  font-size: 20px;
+  font-weight: bold;
+  padding: 10px;
+  max-width: 400px;
+}
+
+@media (min-width:1000px) {
+  .auth-org-text {
+    font-size: 36px;
+
+  }
 }
