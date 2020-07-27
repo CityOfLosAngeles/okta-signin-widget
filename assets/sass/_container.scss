@@ -18,7 +18,6 @@
   margin: 100px auto 8px;
   width: $container-width;
   min-width: $container-min-width;
-  display: flex;
 
   @include device-mq(x-small) {
     margin-top: 0;

@@ -50,9 +50,6 @@ function (Okta) {
         </a>\
         </li>\
       </ul>\
-      {{#if oktaFooterLogo}}\
-        <img src="../img/okta-powered.jpg" class="footer_logo" alt="Powered by Okta"/>\
-      {{/if}}\
     ',
     className: 'auth-footer',
 

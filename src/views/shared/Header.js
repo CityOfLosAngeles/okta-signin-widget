@@ -77,21 +77,15 @@ function (Okta, Animations, LoadingBeacon) {
     currentBeacon: null,
 
     template: '\
-      <div class="side-box">\
-        {{#if useSvgLogo}}\
-          <img src="https://angelenologin-static.lacity.org/img/icons/login/CitySeal.svg" class="auth-org-logo" alt="{{logoText}}"/>\
-          <p class="auth-org-text"> SIGN IN WITH YOUR ANGELENO ACCOUNT </p>\
+      <div class="okta-sign-in-header auth-header">\
+      {{#if useSvgLogo}}\
+        <img src="https://angelenologin-static.lacity.org/img/icons/login/CitySeal.svg" class="auth-org-logo" alt="{{logoText}}"/>\
+      {{else if logo}}\
+        <img src="{{logo}}" class="auth-org-logo" alt="{{logoText}}"/>\
         {{/if}}\
+        <div data-type="beacon-container" class="beacon-container"></div>\
       </div>\
-      <div>\
-        <div class="okta-sign-in-header auth-header">\
-        {{#if logo}}\
-          <img src="{{logo}}" class="auth-org-logo" alt="{{logoText}}"/>\
-        {{/if}}\
-          <div data-type="beacon-container" class="beacon-container"></div>\
-        </div>\
-        <div class="auth-content"><div class="auth-content-inner"></div></div>\
-      <div/>\
+      <div class="auth-content"><div class="auth-content-inner"></div></div>\
     ',
 
     // Attach a 'no-beacon' class if the security image feature
