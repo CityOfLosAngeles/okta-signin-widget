@@ -819,6 +819,7 @@
         color: $medium-text-color;
         -webkit-text-fill-color: $medium-text-color;
         /* background: #f4f4f4; */
+        border-radius: 2rem;
       }
 
       &[type="password"] {
