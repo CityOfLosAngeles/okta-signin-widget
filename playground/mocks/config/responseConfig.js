@@ -4,9 +4,16 @@ const idx = {
   // ===== IDX
 
   '/idp/idx/introspect': [
+    'identify',
+    // 'authenticator-enroll-email',
+    // 'error-internal-server-error',
     // 'authenticator-enroll-password',
     // 'authenticator-enroll-phone',
     // 'authenticator-enroll-phone-voice',
+    // 'authenticator-enroll-data-phone',
+    // 'authenticator-enroll-data-phone-voice',
+    // 'authenticator-enroll-ov-local',
+    // 'error-internal-server-error',
     // 'authenticator-enroll-security-question',
     // 'authenticator-enroll-select-authenticator',
     // 'authenticator-enroll-select-authenticator-with-skip',
@@ -20,8 +27,9 @@ const idx = {
     // 'authenticator-verification-phone-voice',
     // 'authenticator-verification-security-question',
     // 'authenticator-verification-select-authenticator',
+    // 'authenticator-verification-select-authenticator-ov-m2',
     // 'authenticator-verification-webauthn',
-    'authenticator-reset-password',
+    // 'authenticator-reset-password',
     // 'authenticator-expired-password',
     // 'authenticator-expiry-warning-password',
     // 'enroll-profile',
@@ -32,7 +40,6 @@ const idx = {
     // 'factor-verification-email',
     // 'factor-verification-password',
     // 'factor-verification-webauthn',
-    // 'identify',
     // 'identify-with-apple-credential-sso-extension',
     // 'identify-with-apple-redirect-sso-extension',
     // 'identify-with-apple-sso-extension-fallback',
@@ -45,7 +52,7 @@ const idx = {
     // 'identify-with-third-party-idps',
     // 'identify-with-only-third-party-idps',
     // 'identify-with-only-one-third-party-idp',
-    // 'identify-with-password',
+    //'identify-with-password',
     // 'identify-with-universal-link',
     // 'select-factor-authenticate',
     // 'select-factor-for-password-recovery',
@@ -54,7 +61,6 @@ const idx = {
     // 'terminal-return-error-email',
     // 'terminal-return-expired-email',
     // 'terminal-return-stale-email',
-    // 'terminal-transfered',
     // 'terminal-transfered-email',
     // 'unknown-user',
     // 'terminal-registration'
@@ -63,10 +69,14 @@ const idx = {
     'enroll-profile-new'
   ],
   '/idp/idx/credential/enroll': [
-    'authenticator-enroll-security-question',
+    'authenticator-enroll-ov-qr',
+    //'authenticator-enroll-ov-via-sms',
+    'authenticator-enroll-ov-via-email',
+    //'authenticator-enroll-security-question',
   ],
   '/idp/idx/identify': [
-    'identify-with-only-one-third-party-idp',
+    'authenticator-enroll-select-authenticator',
+    //'identify-with-only-one-third-party-idp',
     // 'error-identify-access-denied',
     // 'error-identify-user-locked-unable-challenge'
   ],
@@ -78,7 +88,9 @@ const idx = {
     'error-authenticator-enroll-security-question'
   ],
   '/idp/idx/challenge/send': [
-    'factor-verification-email',
+    //'factor-verification-email',
+    //'authenticator-enroll-ov-sms',
+    'authenticator-enroll-ov-email',
   ],
   '/idp/idx/challenge/resend': [
     // 'factor-verification-email',
@@ -86,11 +98,17 @@ const idx = {
     // 'authenticator-verification-phone-voice'
   ],
   '/idp/idx/challenge/poll': [
+    'authenticator-enroll-ov-qr',
+    'success',
+    //'enroll-profile-new'
     // 'authenticator-enroll-email',
+    // 'authenticator-verification-okta-verify-push',
   ],
   '/idp/idx/challenge': [
     'authenticator-verification-webauthn',
     // 'authenticator-verification-password',
+    // 'authenticator-verification-okta-verify-totp',
+    // 'authenticator-verification-okta-verify-push',
     // 'factor-verification-password',
     // 'factor-verification-email',
   ],
@@ -100,11 +118,18 @@ const idx = {
   ],
   '/idp/idx/cancel': [
     'identify',
-  ]
+  ],
+  '/idp/idx/recover': [
+    'error-forgot-password',
+  ],
 };
 
 // ===== AUTHN
 const authn = {
+  '/api/v1/authn/introspect': [
+    'mfa-required-email',
+    // 'unauthenticated',
+  ],
   '/api/v1/authn': [
     'unauthenticated',
     'success-001'
@@ -146,7 +171,7 @@ const emailVerificationMocks = {
 
 
 // ===== IDX
-// Windows authenticator with loopback server
+// device probe: Windows authenticator with loopback server
 const windowAuthnLoopback = {
   '/idp/idx/introspect': [
     'identify-with-device-probing-loopback', // 1 (response order)
@@ -158,7 +183,7 @@ const windowAuthnLoopback = {
   ],
 };
 
-// Windows authenticator with loopback server polling error (device not registered deny access)
+// device probe: Windows authenticator with loopback server polling error (device not registered deny access)
 const windowAuthnLoopbackPollingFail = {
   '/idp/idx/introspect': [
     'identify-with-device-probing-loopback', // 1 (response order)
@@ -171,7 +196,7 @@ const windowAuthnLoopbackPollingFail = {
   ],
 };
 
-//Windows authenticator with loopback server failfast
+// device probe: Windows authenticator with loopback server failfast
 const windowAuthnLoopbackFailfast = {
   '/idp/idx/introspect': [
     'identify-with-device-probing-loopback',
@@ -187,7 +212,7 @@ const windowAuthnLoopbackFailfast = {
   ],
 };
 
-// Windows/Android authenticator with custom URI
+// device probe: Windows/Android authenticator with custom URI
 const windowAuthnCustomUri = {
   '/idp/idx/introspect': [
     'identify-with-device-probing-loopback-challenge-not-received',
@@ -200,14 +225,14 @@ const windowAuthnCustomUri = {
   ]
 };
 
-// Apple authenticator with Redirect SSO extension
+// device probe: Apple authenticator with Redirect SSO extension
 const appleSsoExtension = {
   '/idp/idx/introspect': [
     'identify-with-apple-sso-extension',
   ],
 };
 
-// Apple authenticator when Credential SSO extension
+// device probe: Apple authenticator with Credential SSO extension
 const appleCredentialSsoExtension = {
   '/idp/idx/introspect': [
     'identify-with-apple-credential-sso-extension',
@@ -217,6 +242,7 @@ const appleCredentialSsoExtension = {
   ],
 };
 
+// device probe: Apple authenticator with universal link
 const appleUniversalLink = {
   '/idp/idx/introspect': [
     'identify-with-apple-sso-extension-fallback'
@@ -229,6 +255,129 @@ const appleUniversalLink = {
     'identify-with-universal-link',
     'identify-with-universal-link',
     'success',
+  ],
+};
+
+// user verification: Windows authenticator with loopback server
+const userVerificationLoopback = {
+  '/idp/idx/introspect': [
+    'identify-with-user-verification-loopback'
+  ],
+  '/idp/idx/authenticators/poll': [
+    'identify-with-user-verification-loopback',
+    'identify-with-user-verification-loopback',
+    'identify-with-user-verification-loopback',
+    'success',
+  ],
+};
+
+// user verification: Windows/Android authenticator with custom URI
+const userVerificationCustomUri = {
+  '/idp/idx/introspect': [
+    'identify-with-device-probing-loopback-challenge-not-received',
+  ],
+  '/idp/idx/authenticators/poll': [
+    'identify-with-user-verification-custom-uri',
+  ],
+  '/idp/idx/authenticators/okta-verify/launch': [
+    'identify-with-user-verification-custom-uri',
+  ]
+};
+
+// user verification: Apple authenticator with Credential SSO extension
+const userVerificationCredentialSSOExtension = {
+  '/idp/idx/introspect': [
+    'identify-with-user-verification-credential-sso-extension'
+  ],
+  '/idp/idx/authenticators/sso_extension/transactions/:transactionId/verify/cancel': [
+    'identify'
+  ],
+};
+
+// user verification: Apple authenticator with universal link
+const userVerificationUniversalLink = {
+  '/idp/idx/introspect': [
+    'identify-with-user-verification-universal-link'
+  ],
+  '/idp/idx/authenticators/okta-verify/launch': [
+    'identify-with-user-verification-universal-link',
+  ],
+  '/idp/idx/authenticators/poll': [
+    'identify-with-user-verification-universal-link',
+    'identify-with-user-verification-universal-link',
+    'identify-with-user-verification-universal-link',
+    'success',
+  ],
+};
+
+// ov m2 totp - success
+const ovTotpSuccess = {
+  '/idp/idx/introspect': [
+    'authenticator-verification-select-authenticator-ov-m2'
+  ],
+  '/idp/idx/challenge': [
+    'authenticator-verification-okta-verify-totp'
+  ],
+  '/idp/idx/challenge/answer': [
+    'success'
+  ],
+};
+
+// ov m2 totp - error
+const ovTotpError = {
+  '/idp/idx/introspect': [
+    'authenticator-verification-select-authenticator-ov-m2'
+  ],
+  '/idp/idx/challenge': [
+    'authenticator-verification-okta-verify-totp'
+  ],
+  '/idp/idx/challenge/answer': [
+    'error-okta-verify-totp'
+  ],
+};
+
+// ov m2 push - success
+const ovPushSuccess = {
+  '/idp/idx/introspect': [
+    'authenticator-verification-select-authenticator-ov-m2'
+  ],
+  '/idp/idx/challenge': [
+    'authenticator-verification-okta-verify-push'
+  ],
+  '/idp/idx/challenge/poll': [
+    'authenticator-verification-okta-verify-push',
+    'authenticator-verification-okta-verify-push',
+    'authenticator-verification-okta-verify-push',
+    'success',
+  ],
+};
+
+// ov m2 push - wait
+const ovPushWait = {
+  '/idp/idx/introspect': [
+    'authenticator-verification-select-authenticator-ov-m2'
+  ],
+  '/idp/idx/challenge': [
+    'authenticator-verification-okta-verify-push'
+  ],
+  '/idp/idx/challenge/poll': [
+    'authenticator-verification-okta-verify-push',
+  ],
+};
+
+// ov m2 push - error
+const ovPushError = {
+  '/idp/idx/introspect': [
+    'authenticator-verification-select-authenticator-ov-m2'
+  ],
+  '/idp/idx/challenge': [
+    'authenticator-verification-okta-verify-push'
+  ],
+  '/idp/idx/challenge/poll': [
+    'authenticator-verification-okta-verify-push',
+    'authenticator-verification-okta-verify-push',
+    'authenticator-verification-okta-verify-push',
+    'authenticator-verification-okta-verify-reject-push',
   ],
 };
 

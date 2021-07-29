@@ -4,15 +4,21 @@ import BaseView from './internals/BaseView';
 
 // factor ignostic views
 import IdentifierView from './views/IdentifierView';
+import TerminalView from './views/TerminalView';
+import SuccessView from './views/SuccessView';
+
+// Device (Okta Mobile)
 import DeviceChallengePollView from './views/DeviceChallengePollView';
 import SSOExtensionView from './views/SSOExtensionView';
+
+// registration
+import EnrollProfileView from './views/EnrollProfileView';
+
+// authenticator list
 import SelectFactorEnrollView from './views/SelectFactorEnrollView';
 import SelectFactorAuthenticateView from './views/SelectFactorAuthenticateView';
 import SelectAuthenticatorEnrollView from './views/SelectAuthenticatorEnrollView';
 import SelectAuthenticatorVerifyView from './views/SelectAuthenticatorVerifyView';
-import EnrollProfileView from './views/EnrollProfileView';
-import TerminalView from './views/TerminalView';
-import SuccessView from './views/SuccessView';
 
 // password
 import EnrollFactorPasswordView from './views/password/EnrollFactorPasswordView';
@@ -25,6 +31,7 @@ import ResetAuthenticatorPasswordView from './views/password/ResetAuthenticatorP
 
 // phone
 import EnrollAuthenticatorPhoneView from './views/phone/EnrollAuthenticatorPhoneView';
+import EnrollAuthenticatorDataPhoneView from './views/phone/EnrollAuthenticatorDataPhoneView';
 import ChallengeAuthenticatorPhoneView from './views/phone/ChallengeAuthenticatorPhoneView';
 import ChallengeAuthenticatorDataPhoneView from './views/phone/ChallengeAuthenticatorDataPhoneView';
 
@@ -38,11 +45,17 @@ import EnrollWebauthnView from './views/webauthn/EnrollWebauthnView';
 import ChallengeWebauthnView from './views/webauthn/ChallengeWebauthnView';
 
 // email
-// import EnrollFactorEmailView from './views/email/EnrollFactorEmailView';
+import EnrollAuthenticatorEmailView from './views/email/EnrollAuthenticatorEmailView';
 import RequiredFactorEmailView from './views/email/RequiredFactorEmailView';
 import ChallengeAuthenticatorEmailView from './views/email/ChallengeAuthenticatorEmailView';
-import TerminalReturnEmailView from './views/email/TerminalReturnEmailView';
-import TerminalTransferedEmailView from './views/email/TerminalTransferedEmailView';
+
+// app(okta verify)
+import EnrollPollOktaVerifyView from './views/ov/EnrollPollOktaVerifyView';
+import SelectEnrollmentChannelOktaVerifyView from './views/ov/SelectEnrollmentChannelOktaVerifyView';
+import EnrollementChannelDataOktaVerifyView from './views/ov/EnrollementChannelDataOktaVerifyView';
+import ChallengeOktaVerifyView from './views/ov/ChallengeOktaVerifyView';
+import ChallengeOktaVerifyPushView from './views/ov/ChallengeOktaVerifyPushView';
+import ChallengeOktaVerifyResendPushView from './views/ov/ChallengeOktaVerifyResendPushView';
 
 const DEFAULT = '_';
 
@@ -82,21 +95,31 @@ const VIEWS_MAPPING = {
     [DEFAULT]: SelectAuthenticatorEnrollView,
   },
   [RemediationForms.AUTHENTICATOR_ENROLLMENT_DATA]: {
-    phone: EnrollAuthenticatorPhoneView,
+    phone: EnrollAuthenticatorDataPhoneView,
   },
   [RemediationForms.ENROLL_AUTHENTICATOR]: {
     password: EnrollAuthenticatorPasswordView,
     'security_key': EnrollWebauthnView,
-    phone: null,
-    'security_question': EnrollAuthenticatorSecurityQuestion
+    phone: EnrollAuthenticatorPhoneView,
+    'security_question': EnrollAuthenticatorSecurityQuestion,
+    email: EnrollAuthenticatorEmailView
+  },
+  [RemediationForms.ENROLL_POLL]: {
+    app: EnrollPollOktaVerifyView,
+  },
+  [RemediationForms.SELECT_ENROLLMENT_CHANNEL]: {
+    app: SelectEnrollmentChannelOktaVerifyView,
+  },
+  [RemediationForms.ENROLLMENT_CHANNEL_DATA]: {
+    app: EnrollementChannelDataOktaVerifyView,
   },
   // Expired scenarios for authenticators..
-  [RemediationForms.RE_ENROLL_AUTHENTICATOR]: {
+  [RemediationForms.REENROLL_AUTHENTICATOR]: {
     // Password expired scenario..
     password: ReEnrollAuthenticatorPasswordView,
   },
   // Will expire soon warnings for authenticators..
-  [RemediationForms.RE_ENROLL_AUTHENTICATOR_WARNING]: {
+  [RemediationForms.REENROLL_AUTHENTICATOR_WARNING]: {
     // Password will expire soon scenario..
     password: ReEnrollAuthenticatorWarningPasswordView,
   },
@@ -115,17 +138,16 @@ const VIEWS_MAPPING = {
     'security_key': ChallengeWebauthnView,
     'security_question': ChallengeAuthenticatorSecurityQuestion,
     phone: ChallengeAuthenticatorPhoneView,
+    app: ChallengeOktaVerifyView,
   },
-  'authenticator-verification-data': {
+  [RemediationForms.CHALLENGE_POLL]: {
+    app: ChallengeOktaVerifyPushView,
+  },
+  [RemediationForms.RESEND_PUSH]: {
+    [DEFAULT]: ChallengeOktaVerifyResendPushView,
+  },
+  [RemediationForms.AUTHENTICATOR_VERIFICATION_DATA]: {
     phone: ChallengeAuthenticatorDataPhoneView,
-  },
-  'terminal-transferred': {
-    [DEFAULT]: TerminalView,
-    'email': TerminalTransferedEmailView,
-  },
-  'terminal-return': {
-    [DEFAULT]: TerminalView,
-    'email': TerminalReturnEmailView,
   },
   [RemediationForms.SUCCESS_REDIRECT]: {
     [DEFAULT]: SuccessView,
@@ -134,23 +156,21 @@ const VIEWS_MAPPING = {
   [RemediationForms.REDIRECT_IDP]: {
     [DEFAULT]: IdentifierView,
   },
+  [RemediationForms.TERMINAL]: {
+    [DEFAULT]: TerminalView,
+  },
 };
 
 module.exports = {
-  create (formName, factorType = DEFAULT) {
+  create (formName, authenticatorType = DEFAULT) {
     const config = VIEWS_MAPPING[formName];
     if (!config) {
-      Logger.warn(`Cannot find customized View (form: ${formName}). Fallback to default configuration.`);
-      if (formName.indexOf('terminal') === 0) {
-        return TerminalView;
-      } else {
-        return BaseView;
-      }
+      Logger.warn(`Cannot find customized View for ${formName}.`);
+      return BaseView;
     }
-    const View = config[factorType] || config[DEFAULT];
-
+    const View = config[authenticatorType] || config[DEFAULT];
     if (!View) {
-      Logger.warn(`Cannot find customized View (form: ${formName}, factor: ${factorType}). Fallback to BaseView.`);
+      Logger.warn(`Cannot find customized View for ${formName} + ${authenticatorType}.`);
       return BaseView;
     }
 

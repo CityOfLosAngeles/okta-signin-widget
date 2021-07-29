@@ -4,8 +4,9 @@ import BaseView from '../internals/BaseView';
 import BaseForm from '../internals/BaseForm';
 import BaseFooter from '../internals/BaseFooter';
 import signInWithIdps from './signin/SignInWithIdps';
+import customButtonsView from './signin/CustomButtons';
 import signInWithDeviceOption from './signin/SignInWithDeviceOption';
-import { createIdpButtons } from '../internals/FormInputFactory';
+import { createIdpButtons, createCustomButtons } from '../internals/FormInputFactory';
 import { getForgotPasswordLink } from '../utils/LinksUtil';
 
 const Body = BaseForm.extend({
@@ -39,6 +40,17 @@ const Body = BaseForm.extend({
       });
     }
 
+    const customButtons = createCustomButtons(this.options.settings);
+    if (Array.isArray(customButtons) && customButtons.length) {
+      this.add(customButtonsView, {
+        selector: '.o-form-button-bar',
+        options: {
+          customButtons,
+          addSeparateLine: true,
+        }
+      });
+    }
+
     if (!hasUISchemas) {
       this.$el.find('.button-primary').hide();
     }
@@ -65,7 +77,7 @@ const Body = BaseForm.extend({
 const Footer = BaseFooter.extend({
   links () {
     let helpLinkHref;
-    if (this.options.settings.get('helpLinks.help') ) {
+    if (this.options.settings.get('helpLinks.help')) {
       helpLinkHref = this.options.settings.get('helpLinks.help');
     } else {
       const baseUrl = this.options.settings.get('baseUrl');
@@ -75,7 +87,7 @@ const Footer = BaseFooter.extend({
     const helpLink = [
       {
         'name': 'help',
-        'label': loc('oie.needhelp', 'login'),
+        'label': loc('help', 'login'),
         'href': helpLinkHref,
       },
     ];
@@ -90,11 +102,22 @@ const Footer = BaseFooter.extend({
       });
     }
 
-    const forgotPasswordLink = getForgotPasswordLink(this.options.appState);
+    const forgotPasswordLink = getForgotPasswordLink(this.options.appState, this.options.settings);
+
+    const customHelpLinks = [];
+    if (this.options.settings.get('helpLinks.custom')) {
+      //add custom helpLinks
+      this.options.settings.get('helpLinks.custom').forEach(customHelpLink => {
+        customHelpLink.name = 'custom';
+        customHelpLink.label = customHelpLink.text;
+        customHelpLinks.push(customHelpLink);
+      });
+    }
 
     return forgotPasswordLink
       .concat(signupLink)
-      .concat(helpLink);
+      .concat(helpLink)
+      .concat(customHelpLinks);
   }
 });
 
