@@ -13,12 +13,15 @@ const ResendView = View.extend(
       'click a.resend-link': 'handleResendLink'
     },
 
+    // Override this to change the resend action location from response
+    resendActionKey: 'currentAuthenticatorEnrollment-resend',
+
     initialize () {
       const resendText = (this.model.get('mode') === 'sms')
         ? loc('oie.phone.verify.sms.resendText', 'login')
         : loc('oie.phone.verify.call.resendText', 'login');
       const linkText = (this.model.get('mode') === 'sms')
-        ? loc('oie.resend.link', 'login')
+        ? loc('oie.phone.verify.sms.resendLinkText', 'login')
         : loc('oie.phone.verify.call.resendLinkText', 'login');
       this.add(createCallout({
         content: `${resendText}&nbsp;<a class='resend-link'>${linkText}</a>`,
@@ -27,7 +30,7 @@ const ResendView = View.extend(
     },
 
     handleResendLink () {
-      this.options.appState.trigger('invokeAction', 'currentAuthenticatorEnrollment-resend');
+      this.options.appState.trigger('invokeAction', this.resendActionKey);
       // Hide warning, but start a timeout again..
       if (!this.el.classList.contains('hide')) {
         this.el.classList.add('hide');
@@ -61,7 +64,7 @@ const Body = BaseForm.extend(Object.assign(
     },
 
     save () {
-      return loc('oie.verify.button', 'login');
+      return loc('mfa.challenge.verify', 'login');
     },
 
     initialize () {
@@ -71,9 +74,11 @@ const Body = BaseForm.extend(Object.assign(
         : loc('mfa.calling', 'login');
       const enterCodeText = loc('oie.phone.verify.enterCodeText', 'login');
 
+      // TODO: Clean-up post M1 when phoneNumber is available in all cases - enrollment & verification.
+      const strongClass = this.model.get('phoneNumber') !== loc('oie.phone.alternate.title', 'login') ? 'strong' : '';
       // Courage doesn't support HTML, hence creating a subtitle here.
       this.add(`<div class="okta-form-subtitle" data-se="o-form-explain">
-        ${sendText}&nbsp;<span class='strong'>${this.model.escape('phoneNumber')}.</span>
+        ${sendText}&nbsp;<span class='${strongClass}'>${this.model.escape('phoneNumber')}.</span>
         &nbsp;${enterCodeText}</div>`, {
         prepend: true,
         selector: '.o-form-fieldset-container',
@@ -104,10 +109,13 @@ export default BaseAuthenticatorView.extend({
         'type': 'string',
       },
       phoneNumber: {
-        'value': profile.phoneNumber,
+        // TODO: Clean-up post M1 when phoneNumber is available in all cases - enrollment & verification.
+        'value': profile && profile.phoneNumber ? profile.phoneNumber : loc('oie.phone.alternate.title', 'login'),
         'type': 'string',
       }
     }, ModelClass.prototype.local );
     return ModelClass.extend({ local });
   },
 });
+
+export { ResendView };

@@ -4,7 +4,9 @@ import { Selector } from 'testcafe';
 const SIGNOUT_LINK = '.auth-footer .js-cancel';
 const GO_BACK_LINK = '.auth-footer .js-go-back';
 const SKIP_LINK = '.auth-footer .js-skip';
+const SWITCH_AUTHENTICATOR_LINK = '.auth-footer .js-switchAuthenticator';
 const ionMessagesSelector = '.ion-messages-container';
+
 export default class BasePageObject {
   constructor(t) {
     this.t = t;
@@ -32,6 +34,10 @@ export default class BasePageObject {
     return Selector(selector).innerText;
   }
 
+  getIonMessages () {
+    return this.form.getElement(ionMessagesSelector).innerText;
+  }
+
   async signoutLinkExists() {
     const elCount = await Selector(SIGNOUT_LINK).count;
     return elCount === 1;
@@ -50,6 +56,10 @@ export default class BasePageObject {
     return Selector(GO_BACK_LINK).textContent;
   }
 
+  async clickGoBackLink() {
+    await this.t.click(Selector(GO_BACK_LINK));
+  }
+
   async skipLinkExists() {
     const elCount = await Selector(SKIP_LINK).count;
     return elCount === 1;
@@ -59,7 +69,16 @@ export default class BasePageObject {
     return Selector(SKIP_LINK).textContent;
   }
 
-  getIonMessages () {
-    return this.form.getElement(ionMessagesSelector).innerText;
+  async clickSwitchAuthenticatorButton() {
+    await this.t.click(Selector(SWITCH_AUTHENTICATOR_LINK));
+  }
+
+  getSwitchAuthenticatorLinkText() {
+    return Selector(SWITCH_AUTHENTICATOR_LINK).textContent;
+  }
+
+  async switchAuthenticatorLinkExists() {
+    const elCount = await Selector(SWITCH_AUTHENTICATOR_LINK).count;
+    return elCount === 1;
   }
 }

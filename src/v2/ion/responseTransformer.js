@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019, Okta, Inc. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Okta, Inc. and/or its affiliates. All rights reserved.
  * The Okta software accompanied by this notice is provided pursuant to the Apache License, Version 2.0 (the "License.")
  *
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
@@ -59,13 +59,26 @@ const getFirstLevelObjects = (resp) => {
 
 const getRemediationValues = (idx) => {
   const remediationValues = [];
-  // handle success case
-  if (_.isEmpty(idx.neededToProceed) && idx.context.success) {
-    remediationValues.push({
-      name: idx.context.success.name,
-      href: idx.context.success.href,
-      value: []
-    });
+  if (_.isEmpty(idx.neededToProceed)) {
+    // no remediation but only success
+    if (idx.context.success) {
+      remediationValues.push({
+        name: idx.context.success.name,
+        href: idx.context.success.href,
+        value: []
+      });
+    } else if (idx.context.messages) {
+      // no remediation but only messages
+      remediationValues.push({
+        name: RemediationForms.TERMINAL,
+        // Using `value` is unnecessary as `messages` will be display via `TerminalView.showMessages`,
+        // even though might sound a littre counterintuitive.
+        // The reason being is there is `BaseForm.showMessages` that is intended to handle
+        // messages generically.
+        value: [],
+      });
+    }
+
   }
   return {
     remediations: [
@@ -176,4 +189,4 @@ const convert = (settings, idx = {}) => {
   return result;
 };
 
-module.exports = convert;
+export default convert;

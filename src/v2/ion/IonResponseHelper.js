@@ -1,4 +1,17 @@
+/*!
+ * Copyright (c) 2020, Okta, Inc. and/or its affiliates. All rights reserved.
+ * The Okta software accompanied by this notice is provided pursuant to the Apache License, Version 2.0 (the "License.")
+ *
+ * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+
 import { _ } from 'okta';
+import { getMessage } from './i18nTransformer';
 
 const convertErrorMessageToErrorSummary = (formName, remediationValues = []) => {
   return _.chain(remediationValues)
@@ -10,10 +23,41 @@ const convertErrorMessageToErrorSummary = (formName, remediationValues = []) => 
     .map(field => {
       return {
         property: formName ? `${formName}.${field.name}` : field.name,
-        errorSummary: _.map(field.messages.value, (err) => err.message),
+        errorSummary: field.messages.value.map(getMessage),
       };
     })
     .value();
+};
+
+/**
+ * Although time complexity is O(n^2),
+ * the `array` is actually very small (size < 5),
+ * hence performance doesn't matter.
+ */
+const uniqWith = (array, comparator) => {
+  if (!Array.isArray(array)) {
+    return [];
+  }
+  if (!_.isFunction(comparator) || array.length === 1) {
+    return array;
+  }
+
+  const result = [];
+  for (let i = 0; i < array.length; i++) {
+    let seen = false;
+    for (let j = i + 1; j < array.length; j++) {
+      /* eslint max-depth: [2, 3] */
+      if (comparator(array[i], array[j])) {
+        seen = true;
+        break;
+      }
+    }
+    if (!seen) {
+      result.push(array[i]);
+    }
+  }
+
+  return result;
 };
 
 /**
@@ -21,8 +65,8 @@ const convertErrorMessageToErrorSummary = (formName, remediationValues = []) => 
  * @example
  * errors = [
  *   {property : fieldName1, errorSummary: [errorMessage1]},
- *   {property : fieldName2, errorSummary: [errorMessage1]}
- *   {property : fieldName3, errorSummary: [errorMessage1, errorMessage2]}
+ *   {property : fieldName2, errorSummary: [errorMessage2]}
+ *   {property : fieldName3, errorSummary: [errorMessage31, errorMessage32]}
  * ]
  */
 const getRemediationErrors = (res) => {
@@ -31,7 +75,7 @@ const getRemediationErrors = (res) => {
   if (!res.remediation || !Array.isArray(res.remediation.value) || res.remediation.value.length === 0) {
     return errors;
   }
-  let remediationFormFields = res.remediation.value[0].value ;
+  let remediationFormFields = res.remediation.value[0].value;
 
   if (!Array.isArray(remediationFormFields)) {
     return errors;
@@ -58,22 +102,21 @@ const getRemediationErrors = (res) => {
     }
   });
 
-  return _.flatten(errors);
+  // API may return identical error on same field
+  // thus run through `uniqWith`.
+  // Check unit test for details.
+  return uniqWith(_.flatten(errors), _.isEqual);
 };
 
 /**
  * return global error summary combined into one string
  * allErrors = 'error string1. error string2'
  */
-const getGlobalErrors  = (res) => {
+const getGlobalErrors = (res) => {
   let allErrors = [];
 
-  if(res.messages && res.messages.value) {
-    _.each(res.messages.value, (value) => {
-      if(value.message) {
-        allErrors.push(value.message);
-      }
-    });
+  if (res.messages && Array.isArray(res.messages.value)) {
+    allErrors = res.messages.value.map(getMessage);
   }
 
   return allErrors.join('. ');
@@ -81,15 +124,22 @@ const getGlobalErrors  = (res) => {
 
 const convertFormErrors = (response) => {
   let errors = {
-    errorCauses : getRemediationErrors(response),
-    errorSummary : getGlobalErrors(response)
+    errorCauses: getRemediationErrors(response),
+    errorSummary: getGlobalErrors(response)
   };
 
   return {
-    responseJSON : errors
+    responseJSON: errors
   };
 };
 
+const isIonErrorResponse = (response = {}) => {
+  // check if error format is an ION response by looking for version attribute.
+  // a little sloppy.
+  return response.version;
+};
+
 export default {
-  convertFormErrors
+  convertFormErrors,
+  isIonErrorResponse,
 };

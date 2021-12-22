@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019, Okta, Inc. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Okta, Inc. and/or its affiliates. All rights reserved.
  * The Okta software accompanied by this notice is provided pursuant to the Apache License, Version 2.0 (the "License.")
  *
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
@@ -10,20 +10,19 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 import { _, Controller } from 'okta';
-import '../../views/shared/FooterWithBackLink';
 import ViewFactory from '../view-builder/ViewFactory';
 import IonResponseHelper from '../ion/IonResponseHelper';
+import { getV1ClassName } from '../ion/ViewClassNamesFactory';
 
 export default Controller.extend({
   className: 'form-controller',
 
-  initialize: function () {
-    Controller.prototype.initialize.call(this);
-
-    this.listenTo(this.options.appState, 'change:currentFormName', this.render);
-    this.listenTo(this.options.appState, 'invokeAction', this.invokeAction);
-    this.listenTo(this.options.appState, 'switchForm', this.switchForm);
-    this.listenTo(this.options.appState, 'saveForm', this.handleFormSave);
+  appStateEvents: {
+    'change:currentFormName': 'handleFormNameChange',
+    'afterError': 'handleAfterError',
+    'invokeAction': 'handleInvokeAction',
+    'saveForm': 'handleSaveForm',
+    'switchForm': 'handleSwitchForm',
   },
 
   preRender () {
@@ -40,22 +39,82 @@ export default Controller.extend({
       currentViewState.name,
       this.options.appState.get('authenticatorType'),
     );
-    this.formView = this.add(TheView, {
-      options: {
-        currentViewState,
-      }
-    }).last();
+    try {
+      this.formView = this.add(TheView, {
+        options: {
+          currentViewState,
+        }
+      }).last();
+    } catch (error) {
+      // This is the place where runtime error (NPE) happens at most of time.
+      // It has been swallowed by Q.js hence add try/catch to surface up errors.
+      this.options.settings.callGlobalError(error);
+      return;
+    }
 
-    this.listenTo(this.formView, 'save', this.handleFormSave);
+    this.triggerAfterRenderEvent();
   },
 
-  invokeAction (actionPath = '') {
+  triggerAfterRenderEvent () {
+    const contextData = this.createAfterEventContext();
+    this.trigger('afterRender', contextData);
+  },
+
+  handleFormNameChange () {
+    this.render();
+  },
+
+  handleAfterError (error = {}) {
+    const contextData = this.createAfterEventContext();
+    const errorContextData = {
+      xhr: error,
+      errorSummary: error.responseJSON && error.responseJSON.errorSummary,
+    };
+    // TODO: need some enhancement after https://github.com/okta/okta-idx-js/pull/27
+    // OKTA-318062
+    this.trigger('afterError', contextData, errorContextData);
+  },
+
+  createAfterEventContext () {
+    const formName = this.options.appState.get('currentFormName');
+    const authenticatorType = this.options.appState.get('authenticatorType');
+    const methodType = this.options.appState.get('authenticatorMethodType');
+    const isPasswordRecoveryFlow = this.options.appState.get('isPasswordRecoveryFlow');
+
+    const v1ControllerClassName = getV1ClassName(
+      formName,
+      authenticatorType,
+      methodType,
+      isPasswordRecoveryFlow,
+    );
+
+    const eventData = {
+      controller: v1ControllerClassName,
+      formName,
+    };
+
+    if (authenticatorType) {
+      eventData.authenticatorType = authenticatorType;
+    }
+    if (methodType && authenticatorType !== methodType) {
+      eventData.methodType = methodType;
+    }
+
+    return eventData;
+  },
+
+  handleSwitchForm (formName) {
+    // trigger formname change to change view
+    this.options.appState.set('currentFormName', formName);
+  },
+
+  handleInvokeAction (actionPath = '') {
     const idx = this.options.appState.get('idx');
     if (idx['neededToProceed'].find(item => item.name === actionPath)) {
       idx.proceed(actionPath, {})
         .then(this.handleIdxSuccess.bind(this))
         .catch(error => {
-          throw error;
+          this.showFormErrors(this.formView.model, error);
         });
       return;
     }
@@ -65,32 +124,30 @@ export default Controller.extend({
     if (_.isFunction(actionFn)) {
       // TODO: OKTA-243167
       // 1. what's the approach to show spinner indicating API in fligh?
-      // 2. how to catch error?
       actionFn()
         .then(this.handleIdxSuccess.bind(this))
         .catch(error => {
-          throw error;
+          this.showFormErrors(this.formView.model, error);
         });
     } else {
-      throw `Invalid action selected: ${actionPath}`;
+      this.options.settings.callGlobalError(`Invalid action selected: ${actionPath}`);
+      this.showFormErrors(this.formView.model, 'Invalid action selected.');
     }
   },
 
-  switchForm (formName) {
-    // trigger formname change to change view
-    this.options.appState.set('currentFormName', formName);
-  },
-
-  handleFormSave (model) {
+  handleSaveForm (model) {
     const formName = model.get('formName');
+
     const idx = this.options.appState.get('idx');
     if (!idx['neededToProceed'].find(item => item.name === formName)) {
-      model.trigger('error', model, { errorSummary: `Cannot find http action for "${formName}".`});
+      this.options.settings.callGlobalError(`Cannot find http action for "${formName}".`);
+      this.showFormErrors(this.formView.model, 'Cannot find action to proceed.');
       return;
     }
+
     this.toggleFormButtonState(true);
     model.trigger('request');
-    return idx.proceed(formName, model.toJSON())
+    idx.proceed(formName, model.toJSON())
       .then(this.handleIdxSuccess.bind(this))
       .catch(error => {
         if (error.proceed && error.rawIdxState) {
@@ -103,18 +160,28 @@ export default Controller.extend({
         } else {
           this.showFormErrors(model, error);
         }
+      })
+      .finally(() => {
+        this.toggleFormButtonState(false);
       });
   },
 
   showFormErrors (model, error) {
-    //check if error format is an ION response by looking for version attribute. To handle both types of responses.
-    if(error.version) {
-      const convertedErrors = IonResponseHelper.convertFormErrors(error);
-      model.trigger('error', model, convertedErrors, convertedErrors.responseJSON.errorCauses.length ? false : true);
-    } else {
-      model.trigger('error', model, {'responseJSON': error}, true);
+    model.trigger('clearFormError');
+    if (!error) {
+      error = 'FormController - unknown error found';
+      this.options.settings.callGlobalError(error);
     }
-    this.toggleFormButtonState(false);
+
+    if(IonResponseHelper.isIonErrorResponse(error)) {
+      const convertedErrors = IonResponseHelper.convertFormErrors(error);
+      const showBanner = convertedErrors.responseJSON.errorCauses.length ? false : true;
+      model.trigger('error', model, convertedErrors, showBanner);
+    } else if (error.errorSummary) {
+      model.trigger('error', model, {responseJSON: error}, true);
+    } else {
+      model.trigger('error', model, {responseJSON: {errorSummary: String(error)}}, true);
+    }
   },
 
   handleIdxSuccess: function (idxResp) {
@@ -130,7 +197,7 @@ export default Controller.extend({
    * @param {boolean} disabled whether add extra disable CSS class.
    */
   toggleFormButtonState: function (disabled) {
-    var button = this.$el.find('.o-form-button-bar .button');
+    const button = this.$el.find('.o-form-button-bar .button');
     button.toggleClass('link-button-disabled', disabled);
   },
 

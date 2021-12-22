@@ -6,15 +6,18 @@ const Body = EnrollAuthenticatorPasswordView.prototype.Body.extend({
   className: 'password-authenticator',
 
   title () {
-    return loc('oie.password.expired.title', 'login');
+    const title = this.options.settings.get('brandName')?
+      loc('password.expired.title.specific', 'login', [this.options.settings.get('brandName')]):
+      loc('password.expired.title.generic', 'login');
+    return title;
   },
 
   save () {
-    return loc('oie.password.expired.primaryButton', 'login');
+    return loc('password.expired.submit', 'login');
   },
 
-  getPasswordPolicy () { 
-    return this.options.appState.get('recoveryFactor').settings;
+  getPasswordPolicySettings () {
+    return this.options.appState.get('recoveryAuthenticator').settings;
   },
 
 });

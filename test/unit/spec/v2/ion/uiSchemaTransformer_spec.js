@@ -9,8 +9,9 @@ import XHRFactorRequiredEmail  from '../../../../../playground/mocks/data/idp/id
 import XHRFactorEnrollOptions from '../../../../../playground/mocks/data/idp/idx/factor-enroll-options.json';
 import XHRAuthenticatorRequiredEmail  from '../../../../../playground/mocks/data/idp/idx/authenticator-verification-email.json';
 import XHRAuthenticatorEnrollSelectAuthenticators  from '../../../../../playground/mocks/data/idp/idx/authenticator-enroll-select-authenticator.json';
-import XHRAuthenticatorEnrollPhone  from '../../../../../playground/mocks/data/idp/idx/authenticator-enroll-phone.json';
+import XHRAuthenticatorEnrollDataPhone  from '../../../../../playground/mocks/data/idp/idx/authenticator-enroll-data-phone.json';
 import XHRAuthenticatorEnrollSecurityQuestion  from '../../../../../playground/mocks/data/idp/idx/authenticator-enroll-security-question.json';
+import XHRAuthenticatorEnrollOktaVerifyQr from '../../../../../playground/mocks/data/idp/idx/authenticator-enroll-ov-qr';
 import XHRIdentifyResponse from '../../../../../playground/mocks/data/idp/idx/identify.json';
 
 describe('v2/ion/uiSchemaTransformer', function () {
@@ -397,6 +398,7 @@ describe('v2/ion/uiSchemaTransformer', function () {
                       'id': 'aut1bospdDFs7q3vc0g4'
                     },
                     'authenticatorType': 'email',
+                    'relatesTo': XHRAuthenticatorRequiredEmail.authenticatorEnrollments.value[0]
                   },
                 ]
               }
@@ -547,6 +549,53 @@ describe('v2/ion/uiSchemaTransformer', function () {
                       'authenticatorId': 'aid568g3mXgtID0X1GGG',
                       'id': 'security-question-enroll-id-123'
                     }
+                  },
+                  {
+                    'label': 'Okta Verify',
+                    'value': {
+                      'form': {
+                        'value': [
+                          {
+                            'name': 'id',
+                            'value': 'aut1erh5wK1M8wA3g0g4',
+                            'required': true,
+                            'mutable': false,
+                          },
+                          {
+                            'name': 'channel',
+                            'required': false,
+                            'type': 'string',
+                            'options': [{
+                              'value': 'qrcode',
+                              'label': 'QRCODE'
+                            }, {
+                              'value': 'sms',
+                              'label': 'SMS'
+                            }, {
+                              'value': 'email',
+                              'label': 'EMAIL'
+                            }]
+                          }
+                        ]
+                      }
+                    },
+                    'relatesTo': {
+                      'displayName': 'Okta Verify',
+                      'type': 'app',
+                      'authenticatorId': 'aut1erh5wK1M8wA3g0g4',
+                      'id': 'okta-verify-enroll-id-123',
+                      'methods': [
+                        {
+                          'type': 'signed_nonce'
+                        },
+                        {
+                          'type': 'push'
+                        },
+                        {
+                          'type': 'totp'
+                        }
+                      ]
+                    }
                   }
                 ]
               },
@@ -564,28 +613,40 @@ describe('v2/ion/uiSchemaTransformer', function () {
                     'value': {
                       'id': 'autwa6eD9o02iBbtv0g3'
                     },
-                    'authenticatorType': 'password'
+                    'authenticatorType': 'password',
+                    'relatesTo': XHRAuthenticatorEnrollSelectAuthenticators.authenticators.value[0]
                   },
                   {
                     'label': 'Okta Phone',
                     'value': {
                       'id': 'aid568g3mXgtID0X1SLH'
                     },
-                    'authenticatorType': 'phone'
+                    'authenticatorType': 'phone',
+                    'relatesTo': XHRAuthenticatorEnrollSelectAuthenticators.authenticators.value[2]
                   },
                   {
                     'label': 'Security Key or Biometric Authenticator (FIDO2)',
                     'value': {
                       'id': 'aidtheidkwh282hv8g3'
                     },
-                    'authenticatorType': 'security_key'
+                    'authenticatorType': 'security_key',
+                    'relatesTo': XHRAuthenticatorEnrollSelectAuthenticators.authenticators.value[1]
                   },
                   {
                     'label': 'Okta Security Question',
                     'value': {
                       'id': 'aid568g3mXgtID0X1GGG'
                     },
-                    'authenticatorType': 'security_question'
+                    'authenticatorType': 'security_question',
+                    'relatesTo': XHRAuthenticatorEnrollSelectAuthenticators.authenticators.value[3]
+                  },
+                  {
+                    'label': 'Okta Verify',
+                    'value': {
+                      'id': 'aut1erh5wK1M8wA3g0g4'
+                    },
+                    'authenticatorType': 'app',
+                    'relatesTo': XHRAuthenticatorEnrollSelectAuthenticators.authenticators.value[4]
                   },
                 ]
               }
@@ -598,23 +659,23 @@ describe('v2/ion/uiSchemaTransformer', function () {
   });
 
   it('converts authenticator enroll - phone', (done) => {
-    MockUtil.mockIntrospect(done, XHRAuthenticatorEnrollPhone, idxResp => {
+    MockUtil.mockIntrospect(done, XHRAuthenticatorEnrollDataPhone, idxResp => {
       const result = _.compose(uiSchemaTransformer, responseTransformer.bind(null, testContext.settings))(idxResp);
 
       expect(result.authenticators).toEqual({
-        value: XHRAuthenticatorEnrollPhone.authenticators.value,
+        value: XHRAuthenticatorEnrollDataPhone.authenticators.value,
       });
 
       expect(result).toEqual({
-        'currentAuthenticator': XHRAuthenticatorEnrollPhone.currentAuthenticator.value,
+        'currentAuthenticator': XHRAuthenticatorEnrollDataPhone.currentAuthenticator.value,
         'authenticators': {
-          value: XHRAuthenticatorEnrollPhone.authenticators.value,
+          value: XHRAuthenticatorEnrollDataPhone.authenticators.value,
         },
-        'user': XHRAuthenticatorEnrollPhone.user.value,
+        'user': XHRAuthenticatorEnrollDataPhone.user.value,
         'remediations': [
           Object.assign(
             {},
-            XHRAuthenticatorEnrollPhone.remediation.value[0],
+            XHRAuthenticatorEnrollDataPhone.remediation.value[0],
             {
               'action': jasmine.any(Function),
               'uiSchema': [
@@ -652,7 +713,7 @@ describe('v2/ion/uiSchemaTransformer', function () {
                   'label-top': true
                 }
               ],
-              'relatesTo': XHRAuthenticatorEnrollPhone.currentAuthenticator,
+              'relatesTo': XHRAuthenticatorEnrollDataPhone.currentAuthenticator,
             },
           ),
           Object.assign(
@@ -672,28 +733,32 @@ describe('v2/ion/uiSchemaTransformer', function () {
                       'value': {
                         'id': 'autwa6eD9o02iBbtv0g3'
                       },
-                      'authenticatorType': 'password'
+                      'authenticatorType': 'password',
+                      'relatesTo': XHRAuthenticatorEnrollDataPhone.authenticators.value[0]
                     },
                     {
                       'label': 'Okta Phone',
                       'value': {
                         'id': 'aid568g3mXgtID0X1SLH'
                       },
-                      'authenticatorType': 'phone'
+                      'authenticatorType': 'phone',
+                      'relatesTo': XHRAuthenticatorEnrollDataPhone.authenticators.value[2]
                     },
                     {
                       'label': 'Security Key or Biometric Authenticator (FIDO2)',
                       'value': {
                         'id': 'aidtheidkwh282hv8g3'
                       },
-                      'authenticatorType': 'security_key'
+                      'authenticatorType': 'security_key',
+                      'relatesTo': XHRAuthenticatorEnrollDataPhone.authenticators.value[1]
                     },
                     {
                       'label': 'Okta Security Question',
                       'value': {
                         'id': 'aid568g3mXgtID0X1GGG'
                       },
-                      'authenticatorType': 'security_question'
+                      'authenticatorType': 'security_question',
+                      'relatesTo': XHRAuthenticatorEnrollDataPhone.authenticators.value[3]
                     },
                   ]
                 }
@@ -939,28 +1004,32 @@ describe('v2/ion/uiSchemaTransformer', function () {
                       'value': {
                         'id': 'autwa6eD9o02iBbtv0g3'
                       },
-                      'authenticatorType': 'password'
+                      'authenticatorType': 'password',
+                      'relatesTo': XHRAuthenticatorEnrollSecurityQuestion.authenticators.value[0]
                     },
                     {
                       'label': 'Okta Phone',
                       'value': {
                         'id': 'aid568g3mXgtID0X1SLH'
                       },
-                      'authenticatorType': 'phone'
+                      'authenticatorType': 'phone',
+                      'relatesTo': XHRAuthenticatorEnrollSecurityQuestion.authenticators.value[2]
                     },
                     {
                       'label': 'Security Key or Biometric Authenticator (FIDO2)',
                       'value': {
                         'id': 'aidtheidkwh282hv8g3'
                       },
-                      'authenticatorType': 'security_key'
+                      'authenticatorType': 'security_key',
+                      'relatesTo': XHRAuthenticatorEnrollSecurityQuestion.authenticators.value[1]
                     },
                     {
                       'label': 'Okta Security Question',
                       'value': {
                         'id': 'aid568g3mXgtID0X1GGG'
                       },
-                      'authenticatorType': 'security_question'
+                      'authenticatorType': 'security_question',
+                      'relatesTo': XHRAuthenticatorEnrollSecurityQuestion.authenticators.value[3]
                     },
                   ]
                 }
@@ -1173,6 +1242,35 @@ describe('v2/ion/uiSchemaTransformer', function () {
         ],
         'idx': idxResp
       });
+    });
+  });
+
+  it('converts select channel response for Okta verify', (done) => {
+    MockUtil.mockIntrospect(done, XHRAuthenticatorEnrollOktaVerifyQr, idxResp => {
+      const result = _.compose(uiSchemaTransformer, responseTransformer.bind(null, testContext.settings))(idxResp);
+      expect(result.remediations[1].uiSchema).toEqual([{
+        name: 'authenticator.id',
+        value: 'aidtheidkwh282hv8g3',
+        required: true,
+        mutable: false,
+        visible: false,
+        'label-top': true,
+        type: 'text'
+      }, {
+        name: 'authenticator.channel',
+        required: true,
+        visible: true,
+        options: [{
+          value: 'sms',
+          label: 'SMS'
+        }, {
+          value: 'email',
+          label: 'Email'
+        }],
+        value: 'sms',
+        'label-top': true,
+        type: 'radio'
+      }]);
     });
   });
 });

@@ -3,6 +3,8 @@ import BaseForm from './BaseForm';
 import BaseModel from './BaseModel';
 import BaseHeader from './BaseHeader';
 import BaseFooter from './BaseFooter';
+import hbs from 'handlebars-inline-precompile';
+import {getClassNameMapping} from '../../ion/ViewClassNamesFactory';
 
 export default View.extend({
 
@@ -12,13 +14,33 @@ export default View.extend({
 
   Footer: BaseFooter,
 
-  className: 'siw-main-view',
+  className () {
+    const appState = this.options.appState;
 
-  template: '<div class="siw-main-header"></div>' +
-      '<div class="siw-main-body"></div>' +
-      '<div class="siw-main-footer"></div>',
+    const formName = appState.get('currentFormName');
+    const authenticatorType = appState.get('authenticatorType');
+    const methodType = appState.get('authenticatorMethodType');
+    const isPasswordRecoveryFlow = appState.get('isPasswordRecoveryFlow');
 
-  initialize () {
+    const additionalClassNames = getClassNameMapping(
+      formName,
+      authenticatorType,
+      methodType,
+      isPasswordRecoveryFlow,
+    );
+
+    const classNames = ['siw-main-view'].concat(additionalClassNames);
+    return classNames.join(' ');
+  },
+
+  template: hbs`
+    <div class="siw-main-header"></div>
+    <div class="siw-main-body"></div>
+    <div class="siw-main-footer"></div>
+  `,
+
+  preRender () {
+    View.prototype.preRender.apply(this, arguments);
     // Add Views
     this.add(this.Header, {
       selector: '.siw-main-header',
@@ -43,6 +65,7 @@ export default View.extend({
     const IonModel = this.createModelClass(
       this.options.currentViewState,
       optionUiSchemaConfig);
+
     const model = new IonModel ({
       formName: this.options.currentViewState.name,
     });
@@ -51,6 +74,7 @@ export default View.extend({
       optionUiSchemaConfig = model.toJSON({verbose: true});
     }
 
+    this.model = model;
     this.form = this.add(this.Body, {
       selector : '.siw-main-body',
       options: Object.assign(

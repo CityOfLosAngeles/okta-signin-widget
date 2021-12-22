@@ -28,7 +28,8 @@ module.exports = function (outputFilename) {
 
         // Vendor files from courage that are remapped in OSW to point to an npm
         // module in our package.json dependencies
-        'handlebars': 'handlebars/dist/handlebars',
+        'handlebars/runtime': 'handlebars/dist/cjs/handlebars.runtime',
+        'handlebars$': 'handlebars/dist/cjs/handlebars.runtime',
         'qtip': '@okta/qtip2/dist/jquery.qtip.min.js',
 
         'duo': 'duo_web_sdk/index.js',
@@ -41,25 +42,41 @@ module.exports = function (outputFilename) {
         // Babel
         {
           test: /\.js$/,
+          // exclude: function (filePath) {
+          //   const filePathContains = (f) => filePath.indexOf(f) > 0;
+          //   const npmRequiresTransform = [
+          //     '/node_modules/parse-ms',
+          //     '/node_modules/@sindresorhus/to-milliseconds'
+          //   ].some(filePathContains);
+          //   const shallBeExcluded = [
+          //     '/node_modules/',
+          //     'packages/@okta/courage-dist/jquery.js',
+          //     'packages/@okta/qtip2'
+          //   ].some(filePathContains);
+
+          //   return shallBeExcluded && !npmRequiresTransform;
+
+          // },
           exclude: function (filePath) {
             const filePathContains = (f) => filePath.indexOf(f) > 0;
+            const s = path.sep;
             const npmRequiresTransform = [
-              '/node_modules/parse-ms',
-              '/node_modules/@sindresorhus/to-milliseconds'
+              `${s}node_modules${s}parse-ms`,
+              `${s}node_modules${s}@sindresorhus${s}to-milliseconds`
             ].some(filePathContains);
             const shallBeExcluded = [
-              '/node_modules/',
-              'packages/@okta/courage-dist/jquery.js',
-              'packages/@okta/qtip2'
+              `${s}node_modules${s}`,
+              `packages${s}@okta${s}courage-dist${s}jquery.js`,
+              `packages${s}@okta${s}qtip2`
             ].some(filePathContains);
-
+          
             return shallBeExcluded && !npmRequiresTransform;
-
           },
           loader: 'babel-loader',
           options: {
             presets: ['@babel/preset-env'],
             plugins: [
+              './packages/@okta/babel-plugin-handlebars-inline-precompile',
               '@babel/plugin-transform-modules-commonjs'
             ]
           }
