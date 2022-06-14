@@ -57,6 +57,17 @@ function (
     }
   });
 
+  var Recaptcha = Okta.View.extend({
+    template: hbs('\
+      <div id="recaptcha-container"></div>\
+    '),
+    className: 'auth-recaptcha',
+    back: function () {
+      this.state.set('navigateDir', Enums.DIRECTION_BACK);
+      this.options.appState.trigger('navigate', '');
+    }
+  });
+
   return BaseLoginController.extend({
     className: 'registration',
     initialize: function () {
@@ -192,6 +203,9 @@ function (
         var form = new Form(self.toJSON());
         // add form
         self.add(form);
+        // add Recaptcha
+        self.recaptcha = new self.Recaptcha(self.toJSON());
+        self.add(self.recaptcha);
         // add footer
         self.footer = new self.Footer(self.toJSON());
         self.add(self.footer);
