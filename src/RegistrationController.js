@@ -59,13 +59,9 @@ function (
 
   var Recaptcha = Okta.View.extend({
     template: hbs('\
-      <div id="recaptcha-container"></div>\
+      <div id="recaptcha"></div>\
     '),
     className: 'auth-recaptcha',
-    back: function () {
-      this.state.set('navigateDir', Enums.DIRECTION_BACK);
-      this.options.appState.trigger('navigate', '');
-    }
   });
 
   return BaseLoginController.extend({
@@ -156,7 +152,12 @@ function (
         },
         save: function () {
           this.settings.preSubmit(this.attributes, function (postData){
-            self.registerUser(postData);
+            grecaptcha.execute();
+            if (grecaptcha.getResponse() == '') {
+              console.log("Needs recaptcha submit");
+            } else {
+              self.registerUser(postData); 
+            }
           }, function (errors) {
             self.showErrors(errors);
           });
@@ -203,9 +204,6 @@ function (
         var form = new Form(self.toJSON());
         // add form
         self.add(form);
-        // add Recaptcha
-        self.recaptcha = new self.Recaptcha(self.toJSON());
-        self.add(self.recaptcha);
         // add footer
         self.footer = new self.Footer(self.toJSON());
         self.add(self.footer);
@@ -227,11 +225,15 @@ function (
             label: Okta.loc('registration.required.fields.label', 'login')
           });
           form.add(requiredFieldsLabel);
+          
+          self.recaptcha = new self.Recaptcha(self.toJSON());
+          form.add(self.recaptcha);
         }
       });
       // fetch schema from API, returns a jqXHR. Wrap it in a Q
       return Q(this.state.get('schema').fetch());
     },
+    Recaptcha: Recaptcha,
     Footer: Footer,
   });
 });
