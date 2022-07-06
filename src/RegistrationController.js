@@ -9,6 +9,7 @@
  *
  * See the License for the specific language governing permissions and limitations under the License.
  */
+import Axios from 'axios';
 import hbs from 'handlebars-inline-precompile';
 
 define([
@@ -59,7 +60,31 @@ function (
 
   var Recaptcha = Okta.View.extend({
     template: hbs('\
+      <!-- CAPTCHA BEGIN -->\
       <div id="recaptcha"></div>\
+      <script async src="https://www.google.com/recaptcha/api.js?render=explicit&onload=recaptchaLoad"></script>\
+      <script type="text/javascript">\
+        if(typeof grecaptcha === "undefined") {\
+          grecaptcha = {};\
+        };\
+        window.grecaptcha.ready = (cb) => {\
+          if(typeof grecaptcha === "undefined") {\
+            const c = "___grecaptcha_cfg";\
+            window[c] = window[c] || {};\
+            (window[c]["fns"] = window[c]["fns"]||[]).push(cb);\
+          } else {\
+            cb();\
+          }\
+        };\
+        function recaptchaLoad() {\
+          grecaptcha.ready(() => {\
+            grecaptcha.render("recaptcha", {\
+              sitekey: sk\
+            });\
+          });\
+        };\
+      </script>\
+      <!-- CAPTCHA END-->\
     '),
     className: 'auth-recaptcha',
   });
@@ -112,6 +137,8 @@ function (
       var self = this;
       this.model.attributes = postData;
       // Model.save returns a jqXHR
+      // self.vKetchup(postData);
+      // return;
       Backbone.Model.prototype.save.call(this.model).then(function () {
         var activationToken = self.model.get('activationToken');
         var postSubmitData = activationToken ? activationToken : self.model.get('email');
@@ -152,11 +179,26 @@ function (
         },
         save: function () {
           this.settings.preSubmit(this.attributes, function (postData){
-            grecaptcha.execute();
-            if (grecaptcha.getResponse() == '') {
-              console.log("Needs recaptcha submit");
+            // grepcaptcha.execute();
+            var captchaResp = grecaptcha.getResponse();
+            if (grecaptcha.getResponse() === '') {
+              alert('Please verify reCAPTCHA');
             } else {
-              self.registerUser(postData); 
+              var postBody = {'g-recaptcha-response' : captchaResp};
+              Axios.post(rcEndpoint, postBody)
+                .then((response) => {
+                  if (response.data?.success) {
+                    //console.log('vn');
+                    self.registerUser(postData); 
+                  } else {
+                    alert('Something went wrong with reCAPTCHA. Please try again or refresh the page and try again.');
+                    //console.log(response.data);
+                  }
+                })
+                .catch((error) => {
+                  alert('Something went wrong with reCAPTCHA. Please refresh the page and try again.');
+                  console.error(error);
+                });
             }
           }, function (errors) {
             self.showErrors(errors);
@@ -213,6 +255,8 @@ function (
         } else {
           // add fields
           updatedSchema.properties.each(function (schemaProperty) {
+            // console.log("SP:");
+            // console.log(schemaProperty);
             var inputOptions = RegistrationFormFactory.createInputOptions(schemaProperty);
             var subSchemas = schemaProperty.get('subSchemas');
             var name = schemaProperty.get('name');
@@ -226,10 +270,13 @@ function (
           });
           form.add(requiredFieldsLabel);
           
+          // captcha
           self.recaptcha = new self.Recaptcha(self.toJSON());
           form.add(self.recaptcha);
+          // captcha
         }
       });
+      
       // fetch schema from API, returns a jqXHR. Wrap it in a Q
       return Q(this.state.get('schema').fetch());
     },
