@@ -19,6 +19,8 @@ jobs:
       uses: actions/setup-node@v1 # sets up Node.js in our environment
       with:
         node-version: '12.x'
+    - name: Use HTTPS instead of SSH
+      run: 'git config --global url.https://github.com/.insteadOf git@github.com:'
     - name: Install Dependencies and Build Okta
       run: yarn install && yarn build:dev
     - name: Setup Python
