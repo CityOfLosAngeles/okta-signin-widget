@@ -8,6 +8,7 @@ on: # run this workflow when a push has been made to `development` branch
   push:
     branches:
       - development
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -17,7 +18,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v1 # sets up Node.js in our environment
       with:
-        node-version: '12.x'
+        node-version: '14.x'
     - name: Install Dependencies and Build Okta
       run: yarn install && yarn build:dev
     - name: Setup Python

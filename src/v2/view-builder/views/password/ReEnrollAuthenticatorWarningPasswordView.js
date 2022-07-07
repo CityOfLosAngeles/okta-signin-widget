@@ -4,17 +4,34 @@ import EnrollAuthenticatorPasswordView from './EnrollAuthenticatorPasswordView';
 
 const Body = EnrollAuthenticatorPasswordView.prototype.Body.extend({
   className: 'password-authenticator',
+  subtitle () {
+    if (this.options.settings.get('brandName')) {
+      return loc('password.expiring.subtitle.specific', 'login', [this.options.settings.get('brandName')]);
+    }
+  },
   title () {
-    const daysToExpiry = this.options.appState.get('currentAuthenticator').settings.daysToExpiry;
-    return `${loc('oie.password.expiry.warning.title', 'login', [ daysToExpiry ])}`;
+    const passwordPolicy = this.getPasswordPolicySettings() || {};
+    const daysToExpiry = passwordPolicy.daysToExpiry;
+
+    if (daysToExpiry > 0) {
+      return loc('password.expiring.title', 'login', [daysToExpiry]);
+    } else if (daysToExpiry === 0) {
+      return loc('password.expiring.today', 'login');
+    } else {
+      return loc('password.expiring.soon', 'login');
+    }
   },
 
   save () {
-    return loc('oie.password.expired.primaryButton', 'login');
+    return loc('password.expired.submit', 'login');
   },
-
-  getPasswordPolicy () { 
-    return this.options.appState.get('currentAuthenticator').settings;
+  showMessages () {
+    // if brandName is configured and messages is present, render as subtitle with brandName in context
+    if (this.options.settings.get('brandName')) {
+      return null;
+    }
+    // else if brandName is not set, render messages object sent from server as text
+    EnrollAuthenticatorPasswordView.prototype.Body.prototype.showMessages.apply(this, arguments);
   },
 });
 

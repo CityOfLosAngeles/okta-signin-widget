@@ -6,15 +6,14 @@ const Body = EnrollAuthenticatorPasswordView.prototype.Body.extend({
   className: 'password-authenticator',
 
   title () {
-    return loc('password.reset.title.generic', 'login');
+    const title = this.options.settings.get('brandName')?
+      loc('password.reset.title.specific', 'login', [this.options.settings.get('brandName')]):
+      loc('password.reset.title.generic', 'login');
+    return title;
   },
 
   save () {
     return loc('password.reset', 'login');
-  },
-
-  getPasswordPolicy () { 
-    return this.options.appState.get('currentAuthenticator').settings;
   },
 
 });

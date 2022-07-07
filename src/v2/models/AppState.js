@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) 2019, Okta, Inc. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Okta, Inc. and/or its affiliates. All rights reserved.
  * The Okta software accompanied by this notice is provided pursuant to the Apache License, Version 2.0 (the "License.")
  *
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0.
@@ -12,7 +12,8 @@
 
 import { _, Model } from 'okta';
 import Logger from 'util/Logger';
-import { FORMS_WITHOUT_SIGNOUT } from '../ion/RemediationConstants';
+import { FORMS_WITHOUT_SIGNOUT, FORMS_WITH_STATIC_BACK_LINK,
+  FORMS_FOR_VERIFICATION } from '../ion/RemediationConstants';
 
 /**
  * Keep track of stateMachine with this special model. Similar to `src/models/AppState.js`
@@ -52,14 +53,20 @@ export default Model.extend({
           || '';
       },
     },
-    showSignoutLink: {
-      deps: ['idx', 'currentFormName'],
-      fn: function (idx = {}, currentFormName) {
-        return idx.actions
-          && _.isFunction(idx.actions.cancel)
-          && !FORMS_WITHOUT_SIGNOUT.includes(currentFormName);
+    authenticatorMethodType: {
+      deps: ['currentAuthenticator', 'currentAuthenticatorEnrollment',],
+      fn (currentAuthenticator = {}, currentAuthenticatorEnrollment = {}) {
+        return currentAuthenticator.methods && currentAuthenticator.methods[0].type
+          || currentAuthenticatorEnrollment.methods && currentAuthenticatorEnrollment.methods[0].type
+          || '';
       },
     },
+    isPasswordRecovery: {
+      deps: ['recoveryAuthenticator'],
+      fn: function (recoveryAuthenticator = {}) {
+        return recoveryAuthenticator && recoveryAuthenticator.type === 'password';
+      }
+    }
   },
 
   hasRemediationObject (formName) {
@@ -87,66 +94,95 @@ export default Model.extend({
   getCurrentViewState () {
     const currentFormName = this.get('currentFormName');
 
-    let currentViewState;
-    if (!_.isEmpty(this.get('remediations'))) {
-      currentViewState = this.get('remediations').filter(r => r.name === currentFormName)[0];
+    if (!currentFormName) {
+      return;
     }
 
-    if (!currentViewState) {
-      if (currentFormName) {
-        Logger.warn(`Cannot find view state for form ${currentFormName}. Fall back to terminal state.`);
-      }
+    // didn't expect `remediations` is empty. See `setIonResponse`.
+    const currentViewState = this.get('remediations').filter(r => r.name === currentFormName)[0];
 
-      currentViewState = this.get('terminal');
+    if (!currentViewState ) {
+      Logger.error('Panic!!');
+      Logger.error(`\tCannot find view state for form ${currentFormName}.`);
+      const allFormNames = this.get('remediations').map(r => r.name);
+      Logger.error(`\tAll available form names: ${allFormNames}`);
     }
 
     return currentViewState;
   },
 
-  setIonResponse (transformedResponse) {
-    // Don't re-render view if new response is same as last.
-    // Usually happening at polling and pipeline doesn't proceed to next step.
-    // expiresAt will be different for each response, hence compare objects without that property
+  shouldReRenderView (transformedResponse) {
     const previousRawState = this.has('idx') ? this.get('idx').rawIdxState : null;
-    if (_.isEqual(_.omit(transformedResponse.idx.rawIdxState, 'expiresAt'), _.omit(previousRawState, 'expiresAt') )) {
+    const identicalResponse = _.isEqual(_.omit(transformedResponse.idx.rawIdxState, 'expiresAt'),
+      _.omit(previousRawState, 'expiresAt') );
+    let reRender = true;
+
+    if (identicalResponse) {
+      /**
+       * returns false: When new response is same as last.
+       * usually happens during polling when pipeline doesn't proceed to next step.
+       * expiresAt will be different for each response, hence compare objects without that property
+       */
+      reRender = false;
+    }
+
+    if (identicalResponse && FORMS_WITH_STATIC_BACK_LINK.includes(this.get('currentFormName'))) {
+      /**
+       * returns true: We want to force reRender if you go back to selection screen from challenge or enroll screen
+       * and re-select the same authenticator for challenge. In this case also new response will be identical
+       * to the old response.
+       */
+      reRender = true;
+    }
+    return reRender;
+  },
+
+  // Sign Out link will be displayed in the footer of a form, unless
+  // - widget config hideSignOutLinkInMFA=true and form is for identity verification (FORMS_FOR_VERIFICATION)
+  // - cancel remediation form is not present in the response
+  // - form is part of our list FORMS_WITHOUT_SIGNOUT
+  shouldShowSignOutLinkInCurrentForm (hideSignOutLinkInMFA) {
+    const idxActions = this.get('idx') && this.get('idx').actions;
+    const currentFormName = this.get('currentFormName');
+    const hideSignOutConfigOverride = hideSignOutLinkInMFA
+      && FORMS_FOR_VERIFICATION.includes(currentFormName);
+
+    return !hideSignOutConfigOverride
+      && idxActions
+      && _.isFunction(idxActions.cancel)
+      && !FORMS_WITHOUT_SIGNOUT.includes(currentFormName);
+  },
+
+  setIonResponse (transformedResponse) {
+    if (!this.shouldReRenderView(transformedResponse)){
       return;
     }
 
-    // `currentFormName` is default to first form of remediation object or nothing.
-    transformedResponse.currentFormName = null;
-
+    // `currentFormName` is default to first form of remediations or nothing.
+    let currentFormName = null;
     if (!_.isEmpty(transformedResponse.remediations)) {
-      transformedResponse.currentFormName = transformedResponse.remediations[0].name;
+      currentFormName = transformedResponse.remediations[0].name;
+    } else {
+      Logger.error('Panic!!');
+      Logger.error('\tNo remediation found.');
+      Logger.error('\tHere is the entire response');
+      Logger.error(JSON.stringify(transformedResponse, null, 2));
     }
 
-    if (transformedResponse.success) {
-      transformedResponse.currentFormName = transformedResponse.success.name;
-    }
-
-    // default terminal state for fall back
-    //TODO: This is a FailSafe, it needs to be removed later by this Jira: OKTA-300044
-    if (transformedResponse.idx.context.terminal && _.isEmpty(transformedResponse.idx.context.terminal.value)) {
-      transformedResponse.terminal = {
-        name: 'terminal',
-        value: [],
-        uiSchema: [],
-      };
-    }
-
-    // default terminal state for fall back
-    if (transformedResponse.idx.context.messages) {
-      transformedResponse.terminal = {
-        name: 'terminal',
-        value: transformedResponse.idx.context.messages.value && transformedResponse.idx.context.messages.value.length
-          ? transformedResponse.idx.context.messages.value
-          : [],
-        uiSchema: [],
-      };
-    }
-    //clear appState before setting new values
+    // clear appState before setting new values
     this.clear({silent: true});
+    // clear cache for derived props.
+    this.trigger('cache:clear');
+
     // set new app state properties
     this.set(transformedResponse);
+
+    // make sure change `currentFormName` is last step.
+    // change `currentFormName` will re-render FormController,
+    // which may depend on other derived properties hence
+    // those derived properties must be re-computed before
+    // re-rendering controller.
+    this.set({ currentFormName });
   }
 
 });

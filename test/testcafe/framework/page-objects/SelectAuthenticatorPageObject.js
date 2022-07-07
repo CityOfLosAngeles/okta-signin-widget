@@ -1,11 +1,13 @@
+import { Selector } from 'testcafe';
 import BasePageObject from './BasePageObject';
 
 const factorListRowSelector = '.authenticator-list .authenticator-row';
 const factorLabelSelector = `${factorListRowSelector} .authenticator-label`;
-const factorDescriptionSelector = `${factorListRowSelector} .authenticator-description .authenticator-label`;
+const factorDescriptionSelector = `${factorListRowSelector} .authenticator-description .authenticator-description--text`;
 const factorIconSelector = `${factorListRowSelector} .authenticator-icon-container .authenticator-icon`;
 const factorSelectButtonSelector = `${factorListRowSelector} .authenticator-button .button`;
-const skipOptionalEnrollmentSelector = `.authenticator-list .skip-all`;
+const skipOptionalEnrollmentSelector = '.authenticator-list .skip-all';
+const CUSTOM_SIGN_OUT_LINK_SELECTOR = '.auth-footer .js-cancel';
 
 export default class SelectFactorPageObject extends BasePageObject {
   constructor(t) {
@@ -24,6 +26,11 @@ export default class SelectFactorPageObject extends BasePageObject {
     return this.form.getElement(factorListRowSelector).nth(index).find(factorDescriptionSelector).textContent;
   }
 
+  async factorDescriptionExistsByIndex(index) {
+    const elCount = await this.form.getElement(factorListRowSelector).nth(index).find(factorDescriptionSelector).count;
+    return elCount === 1;
+  }
+
   getFactorIconClassByIndex(index) {
     return this.form.getElement(factorIconSelector).nth(index).getAttribute('class');
   }
@@ -38,6 +45,10 @@ export default class SelectFactorPageObject extends BasePageObject {
 
   async skipOptionalEnrollment() {
     await this.t.click(this.form.getElement(skipOptionalEnrollmentSelector));
+  }
+
+  getCustomSignOutLink() {
+    return Selector(CUSTOM_SIGN_OUT_LINK_SELECTOR).getAttribute('href');
   }
 
 }

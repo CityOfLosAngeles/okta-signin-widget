@@ -9,6 +9,9 @@
  *
  * See the License for the specific language governing permissions and limitations under the License.
  */
+import Axios from 'axios';
+import hbs from 'handlebars-inline-precompile';
+
 define([
   'okta',
   'q',
@@ -37,11 +40,11 @@ function (
   var { _, Backbone } = Okta;
 
   var Footer = Okta.View.extend({
-    template: '\
+    template: hbs('\
       <a href="#" class="link help" data-se="back-link">\
         {{i18n code="goback" bundle="login"}}\
       </a>\
-    ',
+    '),
     className: 'auth-footer',
     events: {
       'click .help' : function (e) {
@@ -53,6 +56,37 @@ function (
       this.state.set('navigateDir', Enums.DIRECTION_BACK);
       this.options.appState.trigger('navigate', '');
     }
+  });
+
+  var Recaptcha = Okta.View.extend({
+    template: hbs('\
+      <!-- CAPTCHA BEGIN -->\
+      <div id="recaptcha"></div>\
+      <script async src="https://www.google.com/recaptcha/api.js?render=explicit&onload=recaptchaLoad"></script>\
+      <script type="text/javascript">\
+        if(typeof grecaptcha === "undefined") {\
+          grecaptcha = {};\
+        };\
+        window.grecaptcha.ready = (cb) => {\
+          if(typeof grecaptcha === "undefined") {\
+            const c = "___grecaptcha_cfg";\
+            window[c] = window[c] || {};\
+            (window[c]["fns"] = window[c]["fns"]||[]).push(cb);\
+          } else {\
+            cb();\
+          }\
+        };\
+        function recaptchaLoad() {\
+          grecaptcha.ready(() => {\
+            grecaptcha.render("recaptcha", {\
+              sitekey: sk\
+            });\
+          });\
+        };\
+      </script>\
+      <!-- CAPTCHA END-->\
+    '),
+    className: 'auth-recaptcha',
   });
 
   return BaseLoginController.extend({
@@ -103,6 +137,8 @@ function (
       var self = this;
       this.model.attributes = postData;
       // Model.save returns a jqXHR
+      // self.vKetchup(postData);
+      // return;
       Backbone.Model.prototype.save.call(this.model).then(function () {
         var activationToken = self.model.get('activationToken');
         var postSubmitData = activationToken ? activationToken : self.model.get('email');
@@ -143,7 +179,27 @@ function (
         },
         save: function () {
           this.settings.preSubmit(this.attributes, function (postData){
-            self.registerUser(postData);
+            // grepcaptcha.execute();
+            var captchaResp = grecaptcha.getResponse();
+            if (grecaptcha.getResponse() === '') {
+              alert('Please verify reCAPTCHA');
+            } else {
+              var postBody = {'g-recaptcha-response' : captchaResp};
+              Axios.post(rcEndpoint, postBody)
+                .then((response) => {
+                  if (response.data?.success) {
+                    //console.log('vn');
+                    self.registerUser(postData); 
+                  } else {
+                    alert('Something went wrong with reCAPTCHA. Please try again or refresh the page and try again.');
+                    //console.log(response.data);
+                  }
+                })
+                .catch((error) => {
+                  alert('Something went wrong with reCAPTCHA. Please refresh the page and try again.');
+                  console.error(error);
+                });
+            }
           }, function (errors) {
             self.showErrors(errors);
           });
@@ -199,6 +255,8 @@ function (
         } else {
           // add fields
           updatedSchema.properties.each(function (schemaProperty) {
+            // console.log("SP:");
+            // console.log(schemaProperty);
             var inputOptions = RegistrationFormFactory.createInputOptions(schemaProperty);
             var subSchemas = schemaProperty.get('subSchemas');
             var name = schemaProperty.get('name');
@@ -207,15 +265,22 @@ function (
               form.add(SubSchema.extend({id: 'subschemas-' + name, subSchemas: subSchemas}));
             }
           });
-          var requiredFieldsLabel =  Okta.tpl('<span class="required-fields-label">{{label}}</span>')({
+          var requiredFieldsLabel =  hbs('<span class="required-fields-label">{{label}}</span>')({
             label: Okta.loc('registration.required.fields.label', 'login')
           });
           form.add(requiredFieldsLabel);
+          
+          // captcha
+          self.recaptcha = new self.Recaptcha(self.toJSON());
+          form.add(self.recaptcha);
+          // captcha
         }
       });
+      
       // fetch schema from API, returns a jqXHR. Wrap it in a Q
       return Q(this.state.get('schema').fetch());
     },
+    Recaptcha: Recaptcha,
     Footer: Footer,
   });
 });
