@@ -110,6 +110,7 @@
     "jasmine-ajax": "^4.0.0",
     "jasmine-core": "2.99.1",
     "junit-report-builder": "^1.3.2",
+    "bower-installer": "0.8.4",
     "karma": "^4.2.0",
     "karma-chrome-launcher": "^3.0.0",
     "karma-coverage": "^1.1.2",
@@ -141,8 +142,7 @@
     "webdriver-manager": "^12.0.6",
     "webpack": "^3.5.4",
     "webpack-bundle-analyzer": "^3.0.2",
-    "webpack-dev-server": "2.11.3",
-    "bower-installer": "https://github.com/bessdsv/bower-installer.git"
+    "webpack-dev-server": "2.11.3"
   },
   "dependencies": {
     "@babel/polyfill": "^7.10.1",
