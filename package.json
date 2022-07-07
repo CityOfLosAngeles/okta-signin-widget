@@ -141,7 +141,8 @@
     "webdriver-manager": "^12.0.6",
     "webpack": "^3.5.4",
     "webpack-bundle-analyzer": "^3.0.2",
-    "webpack-dev-server": "2.11.3"
+    "webpack-dev-server": "2.11.3",
+    "bower-installer": "https://github.com/bessdsv/bower-installer.git"
   },
   "dependencies": {
     "@babel/polyfill": "^7.10.1",
