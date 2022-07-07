@@ -19,10 +19,6 @@ jobs:
       uses: actions/setup-node@v1 # sets up Node.js in our environment
       with:
         node-version: '12.x'
-    - name: Set SSH
-      uses: webfactory/ssh-agent@v0.5.4
-      with: 
-        ssh-private-key: ${{ secrets.DEV_SSH_KEY }}
     - name: Install Dependencies and Build Okta
       run: yarn install && yarn build:dev
     - name: Setup Python
