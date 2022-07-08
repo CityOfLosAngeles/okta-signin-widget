@@ -115,6 +115,23 @@ module.exports = function (grunt) {
         ]
       },
 
+      'rename-in-target': {
+        files: [
+          {
+            expand: true,
+            cwd: 'target/css',
+            src: ['*.css', '*.css.map'],
+            dest: 'target/css',
+            rename: function (dest, src) {
+              if (src === 'okta-sign-in.css') {
+                return path.resolve(dest, 'okta-sign-in.min.css');
+              }
+              return path.resolve(dest, src);
+            }
+          }
+        ]
+      },
+
       'e2e': {
         options: {
           process: function (content) {
@@ -382,6 +399,7 @@ module.exports = function (grunt) {
     if (prodBuild) {
       buildTasks.push('exec:build-release');
       postBuildTasks.push('copy:target-to-dist');
+      postBuildTasks.push('copy:rename-in-target');
     } else {
       const devTask = mode === 'watch' ? 'exec:build-dev-watch' : 'exec:build-dev';
       buildTasks.push(devTask);
