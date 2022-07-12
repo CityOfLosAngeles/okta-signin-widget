@@ -191,13 +191,15 @@ function (
                     //console.log('vn');
                     self.registerUser(postData); 
                   } else {
-                    alert('Something went wrong with reCAPTCHA. Please try again or refresh the page and try again.');
+                    //alert('Something went wrong with reCAPTCHA. Please try again or refresh the page and try again.');
                     //console.log(response.data);
+                    grecaptcha.reset();
                   }
                 })
                 .catch((error) => {
-                  alert('Something went wrong with reCAPTCHA. Please refresh the page and try again.');
-                  console.error(error);
+                  alert('Could not verify reCAPTCHA. Please try again.');
+                  grecaptcha.reset();
+                  //console.error(error);
                 });
             }
           }, function (errors) {
